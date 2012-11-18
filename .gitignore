@@ -24,3 +24,6 @@
 *.lst
 *.map
 *.sym
+.dep/*.o*
+lib/*.o
+lib/*.o*
