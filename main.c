@@ -36,6 +36,10 @@
 void SPI_MasterInit(void);
 void SPI_MasterTransmit(char cData);
 void paper_step(uint8_t lines);
+void printStrobe1(void);
+void printStrobe2(void);
+void printStrobe3(void);
+void printStrobe4(void);
 
 
 /*--- main ---*/
@@ -43,7 +47,6 @@ int main(void)
 {
   // config 90USB1287
   CPU_PRESCALE(CPU_16MHz);
-  //SPI_MasterInit();
 
   DDRC |= (1 << LATCH) | (1 << STROBE1) | (1 << STROBE2) | (1 << STROBE3) | (1 << STROBE4);
   PORTC |= (1 << LATCH);
@@ -52,10 +55,8 @@ int main(void)
   PORTC |= (1 << STROBE3);
   PORTC |= (1 << STROBE4);
   
-  //for(int i=0; i < 72; i++) test[i]=0x0F;
-  //for(int i=0; i < 72; i++) SPI_MasterTransmit(test[i]);
   DDR_PRINT |= (1 << CLOCK_PRINT) | (1 << DATA_PRINT);
-  int i, j;
+  /*int i, j;
   char buf[73];
 
   for(i = 0; i < 72; i++)
@@ -71,35 +72,19 @@ int main(void)
  
       _delay_ms(1); 
       PORT_PRINT |= (1<<CLOCK_PRINT);
-      _delay_ms(1); /* TODO: Raus */
+      _delay_ms(1);
     }
-  }
+  }*/
 
   while(1)
   {
-    PORTC &= ~(1 << LATCH);
+    /*PORTC &= ~(1 << LATCH);
     _delay_ms(1);
     PORTC |= (1 << LATCH);
 
-    _delay_ms(1);
+    _delay_ms(1);*/
 
-    PORTC &= ~(1 << STROBE1);
-    _delay_ms(10);
-    PORTC |= (1 << STROBE1);
 
-    PORTC &= ~(1 << STROBE2);
-    _delay_ms(10);
-    PORTC |= (1 << STROBE2);
-
-    PORTC &= ~(1 << STROBE3);
-    _delay_ms(10);
-    PORTC |= (1 << STROBE3);
-
-    PORTC &= ~(1 << STROBE4);
-    _delay_ms(10);
-    PORTC |= (1 << STROBE4);
-
-    _delay_ms(2000);    
   }
 
   return 0;
@@ -133,5 +118,33 @@ void paper_step(uint8_t lines)
 
 }
 
+
+void printStrobe1(void)
+{
+  PORTC &= ~(1 << STROBE1);
+  _delay_ms(10);
+  PORTC |= (1 << STROBE1);
+}
+
+void printStrobe2(void)
+{
+  PORTC &= ~(1 << STROBE2);
+  _delay_ms(10);
+  PORTC |= (1 << STROBE2);
+}
+
+void printStrobe3(void)
+{
+  PORTC &= ~(1 << STROBE3);
+  _delay_ms(10);
+  PORTC |= (1 << STROBE3);
+}
+
+void printStrobe4(void)
+{
+  PORTC &= ~(1 << STROBE4);
+  _delay_ms(10);
+  PORTC |= (1 << STROBE4);
+}
 
 
