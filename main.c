@@ -7,9 +7,7 @@
 
 /*--- includes ---*/
 #include <avr/io.h>
-#include "lib/uart.h"
 #include <util/delay.h>
-
 
 /*--- constants ---*/
 // Teensy defaults to only 2 MHz, for compatibility with
@@ -19,21 +17,20 @@
 #define CPU_16MHz 0x00 // see pjrc.com for frequency table
 
 // Hardwareinterface to printer
-#define LATCH   0//PC0
-#define STROBE1 1//PC1
-#define STROBE2 2//PC2
-#define STROBE3 3//PC3
-#define STROBE4 4//PC4
-#define CLOCK   1//PB1
-#define DATA_IN 2//PB2
+#define LATCH   0
+#define STROBE1 1
+#define STROBE2 2
+#define STROBE3 3
+#define STROBE4 4
+#define CLOCK   1
+#define DATA_IN 2
 
-#define READY           0
-#define NO_PAPER        1
-#define PRINTER_HEAD_UP 2
-#define CUT_PAPER       3
-#define PRINTING        4
 
-#define F_CPU 16000000UL
+#define DDR_PRINT DDRB
+#define PORT_PRINT PORTB
+#define CLOCK_PRINT 1
+#define DATA_PRINT 2
+
 
 /*--- prototyps ---*/
 void SPI_MasterInit(void);
@@ -46,77 +43,63 @@ int main(void)
 {
   // config 90USB1287
   CPU_PRESCALE(CPU_16MHz);
-  //uart_init(9600);
-  SPI_MasterInit();
+  //SPI_MasterInit();
 
+  DDRC |= (1 << LATCH) | (1 << STROBE1) | (1 << STROBE2) | (1 << STROBE3) | (1 << STROBE4);
   PORTC |= (1 << LATCH);
   PORTC |= (1 << STROBE1);
   PORTC |= (1 << STROBE2);
   PORTC |= (1 << STROBE3);
   PORTC |= (1 << STROBE4);
+  
+  //for(int i=0; i < 72; i++) test[i]=0x0F;
+  //for(int i=0; i < 72; i++) SPI_MasterTransmit(test[i]);
+  DDR_PRINT |= (1 << CLOCK_PRINT) | (1 << DATA_PRINT);
+  int i, j;
+  char buf[73];
 
-  /* variables */
-  //char line = 0x00;
-  //char printer_flag = 0;
-
-  char test[72];
-  for(int i=0; i < 72; i++) test[i]=0xff;
+  for(i = 0; i < 72; i++)
+  {
+    for(j = 0; j < 8; j++)
+    {
+      PORT_PRINT &= ~(1<<CLOCK_PRINT);
+  
+      if(1)
+        PORT_PRINT |= (1<<DATA_PRINT);
+      else
+        PORT_PRINT &= ~(1<<DATA_PRINT);
+ 
+      _delay_ms(1); 
+      PORT_PRINT |= (1<<CLOCK_PRINT);
+      _delay_ms(1); /* TODO: Raus */
+    }
+  }
 
   while(1)
   {
-    /* wait until is received */
-    //if(1)//uart_available > 0)
-    //{
-      /* interrupt for usart, so caller knows state of printer */
-      //printer_flag = PRINTING;
+    PORTC &= ~(1 << LATCH);
+    _delay_ms(1);
+    PORTC |= (1 << LATCH);
 
-      //line = uart_getchar();
-      //line = 0x01;
-      //if(line == 0x00) /* status abfrage */
-      //{
-        //uart_putchar(printer_flag);
-      //}
-      //else if(line == 0x01) /* empfangen der daten */
-      //{
-        //while(uart_available > 0)
-        //{
-        //  line = uart_getchar();
-          /* send line to printer */
-        //  SPI_MasterTransmit(line);          
-        //}
-        for(int i=0; i < 72; i++) SPI_MasterTransmit(test[i]);
-        
-        PORTC &= ~(1 << LATCH);
-        /* latch need a few nano sec. for write in latch register */
-        PORTC |= (1 << LATCH);
+    _delay_ms(1);
 
-        /* write first line */
-        PORTC &= ~(1 << STROBE1);
-        paper_step(1);
-        PORTC |= (1 << STROBE1);
+    PORTC &= ~(1 << STROBE1);
+    _delay_ms(10);
+    PORTC |= (1 << STROBE1);
 
-        PORTC &= ~(1 << STROBE2);
-        paper_step(1);
-        PORTC |= (1 << STROBE2);
+    PORTC &= ~(1 << STROBE2);
+    _delay_ms(10);
+    PORTC |= (1 << STROBE2);
 
-        PORTC &= ~(1 << STROBE3);
-        paper_step(1);
-        PORTC |= (1 << STROBE3);
+    PORTC &= ~(1 << STROBE3);
+    _delay_ms(10);
+    PORTC |= (1 << STROBE3);
 
-        PORTC &= ~(1 << STROBE4);
-        paper_step(1);
-        PORTC |= (1 << STROBE4);
-      //}
-      //else if(line == 0x02) /* motor vorschub */
-      //{
+    PORTC &= ~(1 << STROBE4);
+    _delay_ms(10);
+    PORTC |= (1 << STROBE4);
 
-      //}
-      //else if(line == 0x03) /* cutter antreiben */
-      //{
-
-      //}
-   // }
-    
+    _delay_ms(2000);    
   }
 
   return 0;
@@ -127,10 +110,11 @@ int main(void)
 /*--- init spi interface ---*/
 void SPI_MasterInit(void)
 {
+  PRR0 &= ~(1<<2);
   /* Set MOSI and SCK output, all others input */
   DDRB = (1<<DDB2)|(1<<DDB1);
   /* Enable SPI, Master, set clock rate fck/16 */
-  SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR0);
+  SPCR = (1<<SPE)|(1<<MSTR)|(1<<SPR1);
 }
 
 /*--- send data over spi interface ---*/
